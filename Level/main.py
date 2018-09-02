@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 import pygame
 import Tilemap
+import time
 
 # Überprüfen, ob die optionalen Text- und Sound-Module geladen werden konnten
 if not pygame.font: print('Fehler pygame.font Modul konnte nicht geladen werden!')
@@ -40,7 +41,6 @@ def main():
                 map.handle_input(event.key, screen)
             elif event.type == pygame.MOUSEBUTTONUP:
                 map.clicked()
-
         map.render(screen)
         # Screen anzeigen
         pygame.display.flip()
