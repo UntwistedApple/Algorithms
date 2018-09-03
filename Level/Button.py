@@ -3,6 +3,7 @@
 import pygame
 import os
 import Player
+import platform
 
 
 class Button(object):
@@ -39,7 +40,15 @@ class LoadButton(Button):
 
     def click(self, map):
         self.clicked = True
-        files = os.listdir(os.getcwd() + '\\saves')
+        whichos = platform.system()
+        if whichos == 'Linux':
+            direct = '/saves'
+        elif whichos == 'Windows':
+            direct = '\\saves'
+        else:
+            print('You are running on an unrecognized Operating System!\n' + whichos)
+            direct = '/saves'
+        files = os.listdir(os.getcwd() + direct)
         x = self.x + self.w + 5
         y = self.y
         for file in files:
@@ -64,7 +73,15 @@ class FileButton(Button):
         self.text = self.font.render(self.msg, False, (0, 0, 0))
 
     def click(self, map):
-        f = open(os.getcwd() + '\\saves\\' + self.msg, 'r')
+        whichos = platform.system()
+        if whichos == 'Linux':
+            direct = '/saves/'
+        elif whichos == 'Windows':
+            direct = '\\saves\\'
+        else:
+            print('You are running on an unrecognized Operating System!\n' + whichos)
+            direct = '/saves/'
+        f = open(os.getcwd() + direct + self.msg, 'r')
         lines = f.readlines()
         map.tiles = list()
         for line in lines:
