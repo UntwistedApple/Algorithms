@@ -8,7 +8,7 @@ class Player(object):
     def __init__(self, map):
         self.x = map.player_x
         self.y = map.player_y
-        self.speed = 4
+        self.speed = 5
         self.rect = pygame.rect.Rect(6, 58, 38, 38)
 
     def move_up(self):

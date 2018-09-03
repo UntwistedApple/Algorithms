@@ -11,7 +11,7 @@ if not pygame.mixer: print('Fehler pygame.mixer Modul konnte nicht geladen werde
 def main():
     # Fenster erstellen (wir bekommen eine Surface, die den Bildschirm repräsentiert)
     pygame.init()
-    screen = pygame.display.set_mode((22*52, 14*52))
+    screen = pygame.display.set_mode((22*52, 16*52))
 
     pygame.display.set_caption("Hardest Game on Earth")
     pygame.mouse.set_visible(1)

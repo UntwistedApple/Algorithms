@@ -22,11 +22,12 @@ class Tilemap(object):
         self.player_x = -200
         self.player_y = -200
 
-        self.lines = list()
+        self.lines_x = list()
+        self.lines_y = list()
 
         # Mapsize in Tiles
-        self.width = 30
-        self.height = 25
+        self.width = 22
+        self.height = 16
 
         # Erstellen einer leeren Liste der Tiles
         self.tiles = list()
@@ -64,6 +65,10 @@ class Tilemap(object):
                 # Falls das nicht fehlschlägt können wir das Tile auf die screen-Surface blitten.
                 if tile is not None:
                     screen.blit(self.tileset.image, (x * self.tileset.tile_width, y * self.tileset.tile_height), tile.rect)
+        for line in self.lines_x:
+            pygame.draw.rect(screen, (0, 0, 0), (line[0][0]+2, line[1], line[0][1]-line[0][0]-2, 2))
+        for line in self.lines_y:
+            pygame.draw.rect(screen, (0, 0, 0), (line[0], line[1][0], 2, line[1][1]-line[1][0]+2))
         for player in self.players:
             screen.blit(self.tileset.image, (player.x, player.y), player.rect)
         #screen.blit(self.tileset.image, (self.player_x, self.player_y), self.player.rect)

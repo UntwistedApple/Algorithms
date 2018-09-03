@@ -113,3 +113,46 @@ class FileButton(Button):
         map.players = list()
         map.players.append(Player.Player(map))
         map.buttons = list(filter(lambda x: not isinstance(x, FileButton), map.buttons))
+        for j in range(len(map.tiles)):
+            for i in range(len(map.tiles[j])):
+                if map.tiles[j][i] != 'empty':
+                    if j > 0:
+                        if map.tiles[j-1][i] == 'empty':
+                            map.lines_x.append(((i * 52, (i + 1) * 52), j * 52))
+                    if j < (map.height-1):
+                        if map.tiles[j+1][i] == 'empty':
+                            map.lines_x.append(((i * 52, (i + 1) * 52), (j + 1) * 52))
+                    if i > 0:
+                        if map.tiles[j][i-1] == 'empty':
+                            map.lines_y.append((i * 52, (j * 52, (j + 1) * 52)))
+                    if i < (map.width-1):
+                        if map.tiles[j][i+1] == 'empty':
+                            map.lines_y.append(((i + 1) * 52, (j * 52, (j + 1) * 52)))
+
+        while self.merge_lines(map):
+            pass
+
+    def merge_lines(self, map):
+        for line in map.lines_x:
+            for line2 in map.lines_x:
+                if line[0][1] == line2[0][0] and line[1] == line2[1]:
+                    newline = ((line[0][0], line2[0][1]), line[1])
+                    newlines = list()
+                    newlines.append(newline)
+                    for _ in map.lines_x:
+                        if _ not in (line, line2):
+                            newlines.append(_)
+                    map.lines_x = newlines
+                    return True
+        for line in map.lines_y:
+            for line2 in map.lines_y:
+                if line[1][1] == line2[1][0] and line[0] == line2[0]:
+                    newline = (line[0], (line[1][0], line2[1][1]))
+                    newlines = list()
+                    newlines.append(newline)
+                    for _ in map.lines_y:
+                        if _ not in (line, line2):
+                            newlines.append(_)
+                    map.lines_y = newlines
+                    return True
+        return False
