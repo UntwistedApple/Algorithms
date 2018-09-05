@@ -16,11 +16,17 @@ class Tilemap(object):
         self.tileset = Tileset.Tileset('template.png', (255, 0, 255), 52, 52)
         self.tileset.add_tile('dark', 0, 0)
         self.tileset.add_tile('light', 52, 0)
+        self.tileset.add_tile('start', 104, 0)
         self.tileset.add_tile('goal', 104, 0)
         self.tileset.add_tile('player', 0, 52)
         self.tileset.add_tile('empty', 52, 52)
         self.player_x = -200
         self.player_y = -200
+        self.goals = list()
+        self.name = ''
+        self.goal_reached = False
+        self.texts = list()
+        self.font = pygame.font.SysFont('Comic Sans MS', 40)
 
         self.lines_x = list()
         self.lines_y = list()
@@ -32,7 +38,6 @@ class Tilemap(object):
         # Erstellen einer leeren Liste der Tiles
         self.tiles = list()
 
-        self.player = self.tileset.get_tile('player')
 
         for i in range(0, self.height):
             self.tiles.append(list())
@@ -40,7 +45,7 @@ class Tilemap(object):
                 self.tiles[i].append('empty')
 
         self.buttons = list()
-        self.buttons.append(Button.LoadButton('Load', 30, 30))
+        self.buttons.append(Button.LoadButton())
 
         self.players = list()
         self.players.append(Player.Player(self))
@@ -71,13 +76,15 @@ class Tilemap(object):
             pygame.draw.rect(screen, (0, 0, 0), (line[0], line[1][0], 2, line[1][1]-line[1][0]+2))
         for player in self.players:
             screen.blit(self.tileset.image, (player.x, player.y), player.rect)
-        #screen.blit(self.tileset.image, (self.player_x, self.player_y), self.player.rect)
+        for str in self.texts:
+            text = self.font.render(str[0], False, (0, 0, 0))
+            screen.blit(text, (str[1], str[2]))
         for button in self.buttons:
             button.render(screen)
     # Tastendrücke verarbeiten:
 
     def handle_input(self, key, screen):
-        if len(self.players) == 1:
+        if len(self.players) == 1 and not self.goal_reached:
             player = self.players[0]
             if key == pygame.K_LEFT:
                 player.move_left()
