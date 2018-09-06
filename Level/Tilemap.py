@@ -5,6 +5,7 @@ import random
 import Tileset
 import Button
 import Player
+import Dots
 
 # Die Tilemap Klasse verwaltet die Tile-Daten, die das Aussehen der Karte beschreiben
 
@@ -19,7 +20,6 @@ class Tilemap(object):
         self.tileset.add_tile('start', 104, 0)
         self.tileset.add_tile('goal', 104, 0)
         self.tileset.add_tile('player', 0, 52)
-        self.tileset.add_tile('empty', 52, 52)
         self.player_x = -200
         self.player_y = -200
         self.goals = list()
@@ -38,6 +38,7 @@ class Tilemap(object):
         # Erstellen einer leeren Liste der Tiles
         self.tiles = list()
 
+        self.dots = list()
 
         for i in range(0, self.height):
             self.tiles.append(list())
@@ -76,6 +77,8 @@ class Tilemap(object):
             pygame.draw.rect(screen, (0, 0, 0), (line[0], line[1][0], 2, line[1][1]-line[1][0]+2))
         for player in self.players:
             screen.blit(self.tileset.image, (player.x, player.y), player.rect)
+        for dot in self.dots:
+            dot.render(screen)
         for str in self.texts:
             text = self.font.render(str[0], False, (0, 0, 0))
             screen.blit(text, (str[1], str[2]))

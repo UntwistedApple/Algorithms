@@ -4,7 +4,7 @@ import pygame
 import os
 import Player
 import platform
-import time
+import Dots
 
 class Button(object):
 
@@ -104,7 +104,7 @@ def load(map, Savename):
         row = list()
         for char in line:
             if char == 'e':
-                row.append('empty')
+                row.append(None)
             elif char == 'l':
                 row.append('light')
             elif char == 'd':
@@ -117,7 +117,7 @@ def load(map, Savename):
                 temp = ''
                 coords = list()
                 for l in line:
-                    if l == '#':
+                    if l in '#;':
                         continue
                     elif l == ',':
                         coords.append(int(temp))
@@ -127,24 +127,42 @@ def load(map, Savename):
                 coords.append(int(temp))
                 map.player_x = coords[0]
                 map.player_y = coords[1]
+                break
+            elif char == 'L':
+                temp = ''
+                x = int
+                moves = list()
+                for l in line:
+                    if l == 'L':
+                        continue
+                    elif l == ',':
+                        x = int(temp)
+                        temp = ''
+                    elif l == ';':
+                        moves.append((x, int(temp)))
+                        temp = ''
+                        x = int
+                    else:
+                        temp += l
+                map.dots.append(Dots.LineDot(map, moves))
         map.tiles.append(row)
     map.players = list()
     map.players.append(Player.Player(map))
     map.buttons = list(filter(lambda x: not isinstance(x, FileButton), map.buttons))
     for j in range(len(map.tiles)):
         for i in range(len(map.tiles[j])):
-            if map.tiles[j][i] != 'empty':
+            if map.tiles[j][i] is not None:
                 if j > 0:
-                    if map.tiles[j - 1][i] == 'empty':
+                    if map.tiles[j - 1][i] is None:
                         map.lines_x.append(((i * 52, (i + 1) * 52), j * 52))
                 if j < (map.height - 1):
-                    if map.tiles[j + 1][i] == 'empty':
+                    if map.tiles[j + 1][i] is None:
                         map.lines_x.append(((i * 52, (i + 1) * 52), (j + 1) * 52))
                 if i > 0:
-                    if map.tiles[j][i - 1] == 'empty':
+                    if map.tiles[j][i - 1] is None:
                         map.lines_y.append((i * 52, (j * 52, (j + 1) * 52)))
                 if i < (map.width - 1):
-                    if map.tiles[j][i + 1] == 'empty':
+                    if map.tiles[j][i + 1] is None:
                         map.lines_y.append(((i + 1) * 52, (j * 52, (j + 1) * 52)))
 
     while merge_lines(map):
