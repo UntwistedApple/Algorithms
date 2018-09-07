@@ -12,7 +12,7 @@ import Dots
 
 class Tilemap(object):
 
-    def __init__(self, screen):
+    def __init__(self):
         # neues Tileset
         self.tileset = Tileset.Tileset('template.png', (255, 0, 255), 52, 52)
         self.tileset.add_tile('dark', 0, 0)
@@ -79,6 +79,10 @@ class Tilemap(object):
             screen.blit(self.tileset.image, (player.x, player.y), player.rect)
         for dot in self.dots:
             dot.render(screen)
+        for player in self.players:
+            for dot in self.dots:
+                if dot.x-38 < player.x < dot.x+15 and dot.y-38 < player.y < dot.y+15:
+                    self.fail()
         for str in self.texts:
             text = self.font.render(str[0], False, (0, 0, 0))
             screen.blit(text, (str[1], str[2]))
@@ -86,7 +90,7 @@ class Tilemap(object):
             button.render(screen)
     # Tastendrücke verarbeiten:
 
-    def handle_input(self, key, screen):
+    def handle_input(self, key):
         if len(self.players) == 1 and not self.goal_reached:
             player = self.players[0]
             if key == pygame.K_LEFT:
@@ -112,3 +116,13 @@ class Tilemap(object):
             for button in self.buttons:
                 if button.clicked:
                     button.unclick(self)
+
+    def fail(self):
+        self.texts.append(('Aww you failed :(', 400, 35))
+        self.buttons.append(Button.RestartButton())
+        self.goal_reached = True
+
+    def done(self):
+        self.texts.append(('Geschafft!', 500, 0))
+        self.buttons.append(Button.RestartButton())
+        self.goal_reached = True

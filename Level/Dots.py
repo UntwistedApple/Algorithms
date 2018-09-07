@@ -6,7 +6,7 @@ from numpy import sqrt
 
 class Dot(object):
 
-    def __init__(self, coords, map, speed=5):
+    def __init__(self, coords, map, speed=7):
         self.img = map.tileset.image
         self.x = coords[0]
         self.y = coords[1]

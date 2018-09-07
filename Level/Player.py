@@ -12,7 +12,7 @@ class Player(object):
         self.lines_y = map.lines_y
         self.x = map.player_x
         self.y = map.player_y
-        self.speed = 5
+        self.speed = 4
         self.rect = pygame.rect.Rect(6, 58, 38, 38)
 
     def move_up(self):
@@ -50,6 +50,4 @@ class Player(object):
     def check_goal(self):
         for goal in self.map.goals:
             if (goal[0]*52-38 < self.x < (goal[0]+1)*52)  and (goal[1]*52-38 < self.y < (goal[1]+1)*52):
-                self.map.texts.append(('Geschafft!', 500, 0))
-                self.map.buttons.append(Button.RestartButton())
-                self.map.goal_reached = True
+                self.map.done()

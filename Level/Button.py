@@ -5,11 +5,13 @@ import os
 import Player
 import platform
 import Dots
+import re
 
 class Button(object):
 
     def __init__(self, msg, x, y, w, h, bw, tsize):
         self.msg = msg
+        self.capt = self.msg
         self.x = x
         self.y = y
         self.w = w
@@ -29,7 +31,7 @@ class Button(object):
     def render(self, screen):
         pygame.draw.rect(screen, (0, 0, 0), (self.x, self.y, self.w, self.h))
         pygame.draw.rect(screen, (255, 255, 255), (self.x + self.bw, self.y + self.bw, self.w - self.bw * 2, self.h - self.bw * 2))
-        screen.blit(self.text, (self.w / 2 + self.x - 12 * len(self.msg) / 2 - 5, self.h / 2 + self.y - self.tsize / 2 - 5))
+        screen.blit(self.text, (self.w / 2 + self.x - 12 * len(self.capt) / 2 - 5, self.h / 2 + self.y - self.tsize / 2 - 5))
 
 
 class LoadButton(Button):
@@ -69,10 +71,8 @@ class RestartButton(Button):
         Button.__init__(self, 'Restart', 945, 30, 150, 75, 10, 30)
 
     def click(self, map):
-        map.goal_reached = False
-        load(map, map.name)
-        map.buttons = list(filter(lambda x: not isinstance(x, RestartButton), map.buttons))
-        map.texts = list(filter(lambda x: not x[0] == 'Geschafft!', map.texts))
+        restart(map)
+
 
 class FileButton(Button):
 
@@ -81,13 +81,34 @@ class FileButton(Button):
 
     def text(self):
         self.font = pygame.font.SysFont('Arial', self.tsize)
-        self.text = self.font.render(self.msg, False, (0, 0, 0))
+        self.capt = re.sub('\.txt', '', self.msg)
+        self.text = self.font.render(self.capt, False, (0, 0, 0))
 
     def click(self, map):
+        list(filter(lambda x: isinstance(x, LoadButton), map.buttons))[0].clicked = False
         load(map, self.msg)
 
 
+def restart(map, name=''):
+    if name == '':
+        name = map.name
+    map.name = ''
+    map.goal_reached = False
+    map.goals = list()
+    map.texts = list()
+    map.lines_x = list()
+    map.lines_y = list()
+    map.tiles = list()
+    map.dots = list()
+    load(map, name)
+    map.buttons = list(filter(lambda x: not isinstance(x, RestartButton), map.buttons))
+    map.texts = list(filter(lambda x: not x[0] == 'Geschafft!', map.texts))
+
+
 def load(map, Savename):
+    if map.name != '':
+        restart(map, name=Savename)
+        return
     map.name = Savename
     whichos = platform.system()
     if whichos == 'Linux':
@@ -120,11 +141,11 @@ def load(map, Savename):
                     if l in '#;':
                         continue
                     elif l == ',':
-                        coords.append(int(temp))
+                        coords.append(int(temp)*52-19-26)
                         temp = ''
                     else:
                         temp += l
-                coords.append(int(temp))
+                coords.append(int(temp)*52-26-19)
                 map.player_x = coords[0]
                 map.player_y = coords[1]
                 break
@@ -136,10 +157,10 @@ def load(map, Savename):
                     if l == 'L':
                         continue
                     elif l == ',':
-                        x = int(temp)
+                        x = int(temp)*52-26-8
                         temp = ''
                     elif l == ';':
-                        moves.append((x, int(temp)))
+                        moves.append((x, int(temp)*52-26-8))
                         temp = ''
                         x = int
                     else:
