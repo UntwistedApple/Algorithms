@@ -2,10 +2,10 @@
 
 import pygame
 import os
-import Player
 import platform
-import Dots
 import re
+from Level import Player, Dots
+
 
 class Button(object):
 
@@ -31,7 +31,7 @@ class Button(object):
     def render(self, screen):
         pygame.draw.rect(screen, (0, 0, 0), (self.x, self.y, self.w, self.h))
         pygame.draw.rect(screen, (255, 255, 255), (self.x + self.bw, self.y + self.bw, self.w - self.bw * 2, self.h - self.bw * 2))
-        screen.blit(self.text, (self.w / 2 + self.x - 12 * len(self.capt) / 2 - 5, self.h / 2 + self.y - self.tsize / 2 - 5))
+        screen.blit(self.text, (self.w / 2 + self.x - 14 * len(self.capt) / 2, self.h / 2 + self.y - self.tsize / 2 - 5))
 
 
 class LoadButton(Button):
@@ -42,6 +42,7 @@ class LoadButton(Button):
 
     def click(self, map):
         self.clicked = True
+        file_path = os.path.dirname(os.path.realpath(__file__))
         whichos = platform.system()
         if whichos == 'Linux':
             direct = '/saves'
@@ -50,7 +51,7 @@ class LoadButton(Button):
         else:
             print('You are running on an unrecognized Operating System!\n' + whichos)
             direct = '/saves'
-        files = os.listdir(os.getcwd() + direct)
+        files = os.listdir(file_path + direct)
         x = self.x + self.w + 5
         y = self.y
         for file in files:
@@ -77,7 +78,7 @@ class RestartButton(Button):
 class FileButton(Button):
 
     def __init__(self, msg, x, y):
-        Button.__init__(self, msg, x, y, 150 + 10, 40, 2, 25)
+        Button.__init__(self, msg, x, y, 145, 40, 2, 25)
 
     def text(self):
         self.font = pygame.font.SysFont('Arial', self.tsize)
@@ -85,8 +86,53 @@ class FileButton(Button):
         self.text = self.font.render(self.capt, False, (0, 0, 0))
 
     def click(self, map):
-        list(filter(lambda x: isinstance(x, LoadButton), map.buttons))[0].clicked = False
         load(map, self.msg)
+
+    def render(self, screen):
+        pygame.draw.rect(screen, (0, 0, 0), (self.x, self.y, self.w, self.h))
+        pygame.draw.rect(screen, (255, 255, 255), (self.x + self.bw, self.y + self.bw, self.w - self.bw * 2, self.h - self.bw * 2))
+        screen.blit(self.text, (self.w / 2 + self.x - 11 * len(self.capt) / 2, self.h / 2 + self.y - self.tsize / 2 - 2))
+
+
+class AlgoButton(Button):
+
+    def __init__(self):
+        Button.__init__(self, 'Start Algorithm', 333, 30, 280, 75, 10, 30)
+        self.clicked = False
+
+    def click(self, map):
+        if map.name == '':
+            map.texts.append(('You have to load a map first!', 300, 350))
+        else:
+            self.clicked = True
+            x = self.x
+            y = self.y + self.h + 2
+            map.buttons.append(GenButton(x, y))
+
+    def unclick(self, map):
+        map.buttons = list(filter(lambda x: not isinstance(x, GenButton), map.buttons))
+        self.clicked = False
+
+
+class GenButton(Button):
+
+    def __init__(self, x, y):
+        Button.__init__(self, 'Genetic', x, y, 125, 40, 5, 25)
+
+    def text(self):
+        self.font = pygame.font.SysFont('Arial', self.tsize)
+        self.capt = re.sub('\.txt', '', self.msg)
+        self.text = self.font.render(self.capt, False, (0, 0, 0))
+
+    def render(self, screen):
+        pygame.draw.rect(screen, (0, 0, 0), (self.x, self.y, self.w, self.h))
+        pygame.draw.rect(screen, (255, 255, 255), (self.x + self.bw, self.y + self.bw, self.w - self.bw * 2, self.h - self.bw * 2))
+        screen.blit(self.text, (self.w / 2 + self.x - 11 * len(self.capt) / 2, self.h / 2 + self.y - self.tsize / 2 - 2))
+
+    def click(self, map):
+        map.is_bot = True
+        map.time()
+        restart(map, map.name)
 
 
 def restart(map, name=''):
@@ -95,7 +141,6 @@ def restart(map, name=''):
     map.name = ''
     map.goal_reached = False
     map.goals = list()
-    map.texts = list()
     map.lines_x = list()
     map.lines_y = list()
     map.tiles = list()
@@ -109,6 +154,8 @@ def load(map, Savename):
     if map.name != '':
         restart(map, name=Savename)
         return
+    file_path = os.path.dirname(os.path.realpath(__file__))
+    map.texts = list()
     map.name = Savename
     whichos = platform.system()
     if whichos == 'Linux':
@@ -118,7 +165,7 @@ def load(map, Savename):
     else:
         print('You are running on an unrecognized Operating System!\n' + whichos)
         direct = '/saves/'
-    f = open(os.getcwd() + direct + Savename, 'r')
+    f = open(file_path + direct + Savename, 'r')
     lines = f.readlines()
     map.tiles = list()
     for line in lines:
@@ -168,8 +215,8 @@ def load(map, Savename):
                 map.dots.append(Dots.LineDot(map, moves))
         map.tiles.append(row)
     map.players = list()
-    map.players.append(Player.Player(map))
-    map.buttons = list(filter(lambda x: not isinstance(x, FileButton), map.buttons))
+    if not map.is_bot:
+        map.players.append(Player.Player(map))
     for j in range(len(map.tiles)):
         for i in range(len(map.tiles[j])):
             if map.tiles[j][i] is not None:
@@ -186,8 +233,7 @@ def load(map, Savename):
                     if map.tiles[j][i + 1] is None:
                         map.lines_y.append(((i + 1) * 52, (j * 52, (j + 1) * 52)))
 
-    while merge_lines(map):
-        pass
+    merge_lines(map)
 
     for j in range(len(map.tiles)):
         for i in range(len(map.tiles[j])):
@@ -206,7 +252,7 @@ def merge_lines(map):
                     if _ not in (line, line2):
                         newlines.append(_)
                 map.lines_x = newlines
-                return True
+                merge_lines(map)
     for line in map.lines_y:
         for line2 in map.lines_y:
             if line[1][1] == line2[1][0] and line[0] == line2[0]:
@@ -217,5 +263,4 @@ def merge_lines(map):
                     if _ not in (line, line2):
                         newlines.append(_)
                 map.lines_y = newlines
-                return True
-    return False
+                merge_lines(map)

@@ -1,11 +1,9 @@
 # -*- coding: UTF-8 -*-
 
 import pygame
-import random
-import Tileset
-import Button
-import Player
-import Dots
+from Level import Tileset, Button, Player
+import datetime
+
 
 # Die Tilemap Klasse verwaltet die Tile-Daten, die das Aussehen der Karte beschreiben
 
@@ -24,9 +22,12 @@ class Tilemap(object):
         self.player_y = -200
         self.goals = list()
         self.name = ''
+        self.is_bot = False
         self.goal_reached = False
         self.texts = list()
         self.font = pygame.font.SysFont('Comic Sans MS', 40)
+        self.started = False
+        self.time = list()
 
         self.lines_x = list()
         self.lines_y = list()
@@ -47,6 +48,7 @@ class Tilemap(object):
 
         self.buttons = list()
         self.buttons.append(Button.LoadButton())
+        self.buttons.append(Button.AlgoButton())
 
         self.players = list()
         self.players.append(Player.Player(self))
@@ -82,47 +84,81 @@ class Tilemap(object):
         for player in self.players:
             for dot in self.dots:
                 if dot.x-38 < player.x < dot.x+15 and dot.y-38 < player.y < dot.y+15:
-                    self.fail()
-        for str in self.texts:
-            text = self.font.render(str[0], False, (0, 0, 0))
-            screen.blit(text, (str[1], str[2]))
+                    player.fail()
+        for string in self.texts:
+            text = self.font.render(string[0], False, (0, 0, 0))
+            screen.blit(text, (string[1], string[2]))
         for button in self.buttons:
             button.render(screen)
     # Tastendrücke verarbeiten:
 
     def handle_input(self, key):
-        if len(self.players) == 1 and not self.goal_reached:
+        if not self.is_bot and not self.goal_reached:
+            if not self.started and self.name != '':
+                self.time()
             player = self.players[0]
             if key == pygame.K_LEFT:
                 player.move_left()
-            if key == pygame.K_RIGHT:
+            elif key == pygame.K_RIGHT:
                 player.move_right()
-            if key == pygame.K_UP:
+            elif key == pygame.K_UP:
                 player.move_up()
-            if key == pygame.K_DOWN:
+            elif key == pygame.K_DOWN:
                 player.move_down()
+
+    def time(self):
+        self.started = True
+        now = str(datetime.datetime.now())
+        self.time = list(
+            map(lambda x: int(x), (now[:4], now[5:7], now[8:10], now[11:13], now[14:16], now[17:19], now[20:26])))
 
     def clicked(self):
         pos = pygame.mouse.get_pos()
-        hit = False
+        whathit = None
         for button in self.buttons:
             if button.x < pos[0] < button.x + button.w and button.y < pos[1] < button.y + button.h:
-                hit = True
+                whathit = type(button)
                 if not button.clicked:
                     button.click(self)
                 else:
                     button.unclick(self)
-        if not hit:
-            for button in self.buttons:
-                if button.clicked:
+        for button in self.buttons:
+            if button.clicked and whathit is not None:
+                if not isinstance(button, whathit):
                     button.unclick(self)
+            elif button.clicked:
+                button.unclick(self)
 
     def fail(self):
-        self.texts.append(('Aww you failed :(', 400, 35))
+        self.texts.append(('Aww you failed :(', 375, 150))
         self.buttons.append(Button.RestartButton())
         self.goal_reached = True
 
-    def done(self):
-        self.texts.append(('Geschafft!', 500, 0))
+    def done(self, time):
+        text = ''
+        if time[0] != 0:
+            text += '%d days and '
+        text += '%d:%d:%d:%d' % (time[1], time[2], time[3], time[4])
+        self.texts.append(('You won! Your Time: '+text, 225, 150))
         self.buttons.append(Button.RestartButton())
         self.goal_reached = True
+        self.started = False
+
+    def move(self):
+        if not self.is_bot:
+            return
+        if len(self.players) == 0:
+            self.finished()
+        for player in self.players:
+            move = player.moves[player.count_moves]
+            if move == 0:
+                player.move_up()
+            elif move == 1:
+                player.move_right()
+            elif move == 2:
+                player.move_down()
+            else:
+                player.move_left()
+
+    def finished(self):
+        pass

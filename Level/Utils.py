@@ -1,13 +1,24 @@
 # -*- coding: UTF-8 -*-
 
 import pygame
+import os
+import platform
 
 # Hilfsfunktion, um ein Bild zu laden:
 
 
 def load_image(filename, colorkey=None):
+    file_path = os.path.dirname(os.path.realpath(__file__))
+    whichos = platform.system()
+    if whichos == 'Linux':
+        direct = '/'
+    elif whichos == 'Windows':
+        direct = '\\'
+    else:
+        print('You are running on an unrecognized Operating System!\n' + whichos)
+        direct = '/'
     # Pygame das Bild laden lassen.
-    image = pygame.image.load(filename)
+    image = pygame.image.load(file_path + direct + filename)
     # Das Pixelformat der Surface an den Bildschirm (genauer: die screen-Surface) anpassen.
     # Dabei die passende Funktion verwenden, je nach dem, ob wir ein Bild mit Alpha-Kanal haben oder nicht.
     if image.get_alpha() is None:
