@@ -6,6 +6,7 @@ import platform
 import re
 import GeneticAlgorithm
 from Level import Player, Dots
+import time
 
 
 class Button(object):
@@ -106,9 +107,7 @@ class AlgoButton(Button):
             map.texts.append(('You have to load a map first!', 300, 350))
         else:
             self.clicked = True
-            x = self.x
-            y = self.y + self.h + 2
-            map.buttons.append(GenButton(x, y))
+            map.buttons.append(GenButton())
 
     def unclick(self, map):
         map.buttons = list(filter(lambda x: not isinstance(x, GenButton), map.buttons))
@@ -117,8 +116,8 @@ class AlgoButton(Button):
 
 class GenButton(Button):
 
-    def __init__(self, x, y):
-        Button.__init__(self, 'Genetic', x, y, 125, 40, 5, 25)
+    def __init__(self):
+        Button.__init__(self, 'Genetic', 333, 107, 150, 40, 5, 25)
 
     def text(self):
         self.font = pygame.font.SysFont('Arial', self.tsize)
@@ -128,7 +127,27 @@ class GenButton(Button):
     def render(self, screen):
         pygame.draw.rect(screen, (0, 0, 0), (self.x, self.y, self.w, self.h))
         pygame.draw.rect(screen, (255, 255, 255), (self.x + self.bw, self.y + self.bw, self.w - self.bw * 2, self.h - self.bw * 2))
-        screen.blit(self.captext, (self.w / 2 + self.x - 11 * len(self.capt) / 2, self.h / 2 + self.y - self.tsize / 2 - 2))
+        screen.blit(self.captext, (self.w / 2 + self.x - 12 * len(self.capt) / 2, self.h / 2 + self.y - self.tsize / 2 - 2))
+
+    def click(self, map):
+        self.clicked = True
+        map.buttons.append(GenButton_1())
+        map.buttons.append(GenButton_2())
+        map.buttons.append(GenButton_3())
+
+    def unclick(self, map):
+        self.clicked = False
+        map.buttons = list(filter(lambda x: not isinstance(x, (GenButton_1, GenButton_2, GenButton_3)), map.buttons))
+
+
+class GenButton_1(GenButton):
+
+    def __init__(self):
+        GenButton.__init__(self)
+        self.x = 333
+        self.y = 149
+        self.msg = 'Genetic V1'
+        self.text()
 
     def click(self, map):
         map.buttons.append(VisibleButton())
@@ -136,6 +155,40 @@ class GenButton(Button):
         map.get_time()
         restart(map, map.name)
         map.bot = GeneticAlgorithm.GenAI(map)
+
+
+class GenButton_2(GenButton):
+
+    def __init__(self):
+        GenButton.__init__(self)
+        self.x = 333
+        self.y = 191
+        self.msg = 'Genetic V2'
+        self.text()
+
+    def click(self, map):
+        map.buttons.append(VisibleButton())
+        map.is_bot = True
+        map.get_time()
+        restart(map, map.name)
+        map.bot = GeneticAlgorithm.GenAI_2(map)
+
+
+class GenButton_3(GenButton):
+
+    def __init__(self):
+        GenButton.__init__(self)
+        self.x = 333
+        self.y = 233
+        self.msg = 'Genetic V3'
+        self.text()
+
+    def click(self, map):
+        map.buttons.append(VisibleButton())
+        map.is_bot = True
+        map.get_time()
+        restart(map, map.name)
+        map.bot = GeneticAlgorithm.GenAI_3(map)
 
 
 class VisibleButton(Button):

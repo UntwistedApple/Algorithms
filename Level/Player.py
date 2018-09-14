@@ -11,6 +11,7 @@ class Player(object):
         if map.is_bot:
             self.visible = False
             self.fitness = 0
+            self.failed = False
             self.moves = list()
             self.goal_reached = False
             self.visited = list()
@@ -98,6 +99,7 @@ class Player(object):
         if not self.map.is_bot:
             self.map.fail()
         else:
+            self.failed = True
             self.map.players = list(filter(lambda x: x != self, self.map.players))
 
     def get_time(self):

@@ -97,7 +97,19 @@ class Tilemap(object):
         for string in self.texts:
             text = self.font.render(string[0], False, (0, 0, 0))
             screen.blit(text, (string[1], string[2]))
-        if isinstance(self.bot, GeneticAlgorithm.GenAI):
+        if isinstance(self.bot, GeneticAlgorithm.GenAI_2):
+            text = pygame.font.SysFont('Arial', 40).render('%d / %d'
+                                                           % (self.bot.generation, self.bot.generations_per_change),
+                                                           False, (0, 0, 0))
+            screen.blit(text, (20, 130))
+            text = pygame.font.SysFont('Arial', 40).render('%d / %d'
+                                                           % (self.players[0].count_moves, self.bot.moves_per_change),
+                                                           False, (0, 0, 0))
+            screen.blit(text, (20, 165))
+            text = pygame.font.SysFont('Arial', 40).render(str(self.bot.generation // self.bot.generations_per_change),
+                                                           False, (0, 0, 0))
+            screen.blit(text, (20, 200))
+        elif isinstance(self.bot, GeneticAlgorithm.GenAI):
             text = pygame.font.SysFont('Arial', 40).render(str(self.bot.generation), False, (0, 0, 0))
             screen.blit(text, (20, 130))
             text = pygame.font.SysFont('Arial', 40).render(str(self.players[0].count_moves), False, (0, 0, 0))
@@ -139,7 +151,11 @@ class Tilemap(object):
         for button in self.buttons:
             if button.clicked and whathit is not None:
                 if not isinstance(button, whathit):
-                    button.unclick(self)
+                    if whathit == Button.GenButton:
+                        if not isinstance(button, Button.AlgoButton):
+                            button.unclick(self)
+                    else:
+                        button.unclick(self)
             elif button.clicked:
                 button.unclick(self)
 
