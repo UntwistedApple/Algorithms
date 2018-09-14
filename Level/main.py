@@ -28,7 +28,7 @@ def main():
         running = True
 
         while running:
-            clock.tick(30)
+            clock.tick(map.max_fps)
             # screen-Surface (Hintergrund) füllen
             screen.fill((180, 181, 254))
             # Alle Events bearbeiten

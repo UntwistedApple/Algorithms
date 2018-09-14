@@ -9,11 +9,17 @@ class Player(object):
 
     def __init__(self, map):
         if map.is_bot:
+            self.visible = False
             self.fitness = 0
             self.moves = list()
+            self.goal_reached = False
+            self.visited = list()
+            self.new_fields = 0
+            self.move_at_last_new = 0
         self.count_moves = 0
         self.time = list()
         self.finish_time = list()
+        self.time_in_seconds = int
         self.map = map
         self.lines_x = map.lines_x
         self.lines_y = map.lines_y
@@ -57,32 +63,60 @@ class Player(object):
     def check_goal(self):
         for goal in self.map.goals:
             if (goal[0]*52-38 < self.x < (goal[0]+1)*52)  and (goal[1]*52-38 < self.y < (goal[1]+1)*52):
-                now = str(datetime.datetime.now())
-                self.finish_time = list(map(lambda x: int(x), (now[:4], now[5:7], now[8:10], now[11:13], now[14:16], now[17:19], now[20:26])))
-                time = tuple(numpy.subtract(self.finish_time, self.map.time))
-                for ind in range(len(time)):
-                    if ind > 1:
-                        self.time.append(time[ind])
-                if self.time[1] < 0:
-                    self.time[0] -= 1
-                    self.time[1] += 24
-                if self.time[2] < 0:
-                    self.time[1] -= 1
-                    self.time[2] += 60
-                if self.time[3] < 0:
-                    self.time[2] -= 1
-                    self.time[3] += 60
-                if self.time[4] < 0:
-                    self.time[3] -= 1
-                    self.time[4] += 1000000
+                self.get_time()
+                sec = self.time[0]*24
+                sec = (sec + self.time[1])*60
+                sec = (sec + self.time[2]) * 60
+                sec += self.time[3]
+                sec += self.time[4]/1000000
+                self.time_in_seconds = sec
                 if not self.map.is_bot:
                     self.map.done(self.time)
+                else:
+                    self.goal_reached = True
                 return
         if self.map.is_bot:
             self.count_moves += 1
+            if not ((self.x+1)//52, (self.y+1)//52) in self.visited:
+                self.new_fields += 1
+                self.visited.append(((self.x+1)//52, (self.y+1)//52))
+                self.move_at_last_new = self.count_moves
+            if not ((self.x+37)//52, (self.y+1)//52) in self.visited:
+                self.new_fields += 1
+                self.visited.append(((self.x+37)//52, (self.y+1)//52))
+                self.move_at_last_new = self.count_moves
+            if not ((self.x+1)//52, (self.y+37)//52) in self.visited:
+                self.new_fields += 1
+                self.visited.append(((self.x+1)//52, (self.y+37)//52))
+                self.move_at_last_new = self.count_moves
+            if not ((self.x+37)//52, (self.y+37)//52) in self.visited:
+                self.new_fields += 1
+                self.visited.append(((self.x+37)//52, (self.y+37)//52))
+                self.move_at_last_new = self.count_moves
 
     def fail(self):
         if not self.map.is_bot:
             self.map.fail()
         else:
             self.map.players = list(filter(lambda x: x != self, self.map.players))
+
+    def get_time(self):
+        now = str(datetime.datetime.now())
+        self.finish_time = list(
+            map(lambda x: int(x), (now[:4], now[5:7], now[8:10], now[11:13], now[14:16], now[17:19], now[20:26])))
+        time = tuple(numpy.subtract(self.finish_time, self.map.time))
+        for ind in range(len(time)):
+            if ind > 1:
+                self.time.append(time[ind])
+        if self.time[1] < 0:
+            self.time[0] -= 1
+            self.time[1] += 24
+        if self.time[2] < 0:
+            self.time[1] -= 1
+            self.time[2] += 60
+        if self.time[3] < 0:
+            self.time[2] -= 1
+            self.time[3] += 60
+        if self.time[4] < 0:
+            self.time[3] -= 1
+            self.time[4] += 1000000

@@ -4,6 +4,7 @@ import pygame
 import os
 import platform
 import re
+import GeneticAlgorithm
 from Level import Player, Dots
 
 
@@ -26,12 +27,12 @@ class Button(object):
 
     def text(self):
         self.font = pygame.font.SysFont('Comic Sans MS', self.tsize)
-        self.text = self.font.render(self.msg, False, (0, 0, 0))
+        self.captext = self.font.render(self.msg, False, (0, 0, 0))
 
     def render(self, screen):
         pygame.draw.rect(screen, (0, 0, 0), (self.x, self.y, self.w, self.h))
         pygame.draw.rect(screen, (255, 255, 255), (self.x + self.bw, self.y + self.bw, self.w - self.bw * 2, self.h - self.bw * 2))
-        screen.blit(self.text, (self.w / 2 + self.x - 14 * len(self.capt) / 2, self.h / 2 + self.y - self.tsize / 2 - 5))
+        screen.blit(self.captext, (self.w / 2 + self.x - 14 * len(self.capt) / 2, self.h / 2 + self.y - self.tsize / 2 - 5))
 
 
 class LoadButton(Button):
@@ -83,7 +84,7 @@ class FileButton(Button):
     def text(self):
         self.font = pygame.font.SysFont('Arial', self.tsize)
         self.capt = re.sub('\.txt', '', self.msg)
-        self.text = self.font.render(self.capt, False, (0, 0, 0))
+        self.captext = self.font.render(self.capt, False, (0, 0, 0))
 
     def click(self, map):
         load(map, self.msg)
@@ -91,7 +92,7 @@ class FileButton(Button):
     def render(self, screen):
         pygame.draw.rect(screen, (0, 0, 0), (self.x, self.y, self.w, self.h))
         pygame.draw.rect(screen, (255, 255, 255), (self.x + self.bw, self.y + self.bw, self.w - self.bw * 2, self.h - self.bw * 2))
-        screen.blit(self.text, (self.w / 2 + self.x - 11 * len(self.capt) / 2, self.h / 2 + self.y - self.tsize / 2 - 2))
+        screen.blit(self.captext, (self.w / 2 + self.x - 11 * len(self.capt) / 2, self.h / 2 + self.y - self.tsize / 2 - 2))
 
 
 class AlgoButton(Button):
@@ -122,17 +123,37 @@ class GenButton(Button):
     def text(self):
         self.font = pygame.font.SysFont('Arial', self.tsize)
         self.capt = re.sub('\.txt', '', self.msg)
-        self.text = self.font.render(self.capt, False, (0, 0, 0))
+        self.captext = self.font.render(self.capt, False, (0, 0, 0))
 
     def render(self, screen):
         pygame.draw.rect(screen, (0, 0, 0), (self.x, self.y, self.w, self.h))
         pygame.draw.rect(screen, (255, 255, 255), (self.x + self.bw, self.y + self.bw, self.w - self.bw * 2, self.h - self.bw * 2))
-        screen.blit(self.text, (self.w / 2 + self.x - 11 * len(self.capt) / 2, self.h / 2 + self.y - self.tsize / 2 - 2))
+        screen.blit(self.captext, (self.w / 2 + self.x - 11 * len(self.capt) / 2, self.h / 2 + self.y - self.tsize / 2 - 2))
 
     def click(self, map):
+        map.buttons.append(VisibleButton())
         map.is_bot = True
-        map.time()
+        map.get_time()
         restart(map, map.name)
+        map.bot = GeneticAlgorithm.GenAI(map)
+
+
+class VisibleButton(Button):
+
+    def __init__(self):
+        Button.__init__(self, 'See best', 700, 30, 200, 75, 10, 30)
+        self.active = False
+
+    def click(self, map):
+        if self.active:
+            self.capt = 'See best'
+            self.msg = 'See best'
+        else:
+            self.capt = 'See all'
+            self.msg = 'See all'
+        self.text()
+        map.see_all = not map.see_all
+        self.active = not self.active
 
 
 def restart(map, name=''):

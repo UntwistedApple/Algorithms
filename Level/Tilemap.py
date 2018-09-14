@@ -3,6 +3,7 @@
 import pygame
 from Level import Tileset, Button, Player
 import datetime
+import GeneticAlgorithm
 
 
 # Die Tilemap Klasse verwaltet die Tile-Daten, die das Aussehen der Karte beschreiben
@@ -18,16 +19,19 @@ class Tilemap(object):
         self.tileset.add_tile('start', 104, 0)
         self.tileset.add_tile('goal', 104, 0)
         self.tileset.add_tile('player', 0, 52)
+        self.max_fps = 30
         self.player_x = -200
         self.player_y = -200
         self.goals = list()
         self.name = ''
+        self.see_all = True
         self.is_bot = False
         self.goal_reached = False
         self.texts = list()
-        self.font = pygame.font.SysFont('Comic Sans MS', 40)
+        self.font = pygame.font.SysFont('Arial', 40)  # Comic Sans MS
         self.started = False
         self.time = list()
+        self.bot = None
 
         self.lines_x = list()
         self.lines_y = list()
@@ -57,6 +61,10 @@ class Tilemap(object):
     # Hier rendern wir den sichtbaren Teil der Karte.
 
     def render(self, screen):
+        if self.is_bot:
+            self.max_fps = 80
+        else:
+            self.max_fps = 30
         # Zeilenweise durch die Tiles durchgehen.
         for y in range(0, int(screen.get_height() / self.tileset.tile_height) + 1):
             if y >= self.height or y < 0:
@@ -78,7 +86,8 @@ class Tilemap(object):
         for line in self.lines_y:
             pygame.draw.rect(screen, (0, 0, 0), (line[0], line[1][0], 2, line[1][1]-line[1][0]+2))
         for player in self.players:
-            screen.blit(self.tileset.image, (player.x, player.y), player.rect)
+            if self.see_all or player.visible:
+                screen.blit(self.tileset.image, (player.x, player.y), player.rect)
         for dot in self.dots:
             dot.render(screen)
         for player in self.players:
@@ -88,6 +97,11 @@ class Tilemap(object):
         for string in self.texts:
             text = self.font.render(string[0], False, (0, 0, 0))
             screen.blit(text, (string[1], string[2]))
+        if isinstance(self.bot, GeneticAlgorithm.GenAI):
+            text = pygame.font.SysFont('Arial', 40).render(str(self.bot.generation), False, (0, 0, 0))
+            screen.blit(text, (20, 130))
+            text = pygame.font.SysFont('Arial', 40).render(str(self.players[0].count_moves), False, (0, 0, 0))
+            screen.blit(text, (20, 165))
         for button in self.buttons:
             button.render(screen)
     # Tastendrücke verarbeiten:
@@ -95,7 +109,7 @@ class Tilemap(object):
     def handle_input(self, key):
         if not self.is_bot and not self.goal_reached:
             if not self.started and self.name != '':
-                self.time()
+                self.get_time()
             player = self.players[0]
             if key == pygame.K_LEFT:
                 player.move_left()
@@ -106,7 +120,7 @@ class Tilemap(object):
             elif key == pygame.K_DOWN:
                 player.move_down()
 
-    def time(self):
+    def get_time(self):
         self.started = True
         now = str(datetime.datetime.now())
         self.time = list(
@@ -150,6 +164,9 @@ class Tilemap(object):
         if len(self.players) == 0:
             self.finished()
         for player in self.players:
+            if player.count_moves >= self.bot.move_count:
+                self.finished()
+                return
             move = player.moves[player.count_moves]
             if move == 0:
                 player.move_up()
@@ -161,4 +178,4 @@ class Tilemap(object):
                 player.move_left()
 
     def finished(self):
-        pass
+        self.bot.finished()
