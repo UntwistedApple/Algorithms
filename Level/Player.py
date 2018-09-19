@@ -22,8 +22,6 @@ class Player(object):
         self.finish_time = list()
         self.time_in_seconds = int
         self.map = map
-        #self.lines_x = map.lines_x
-        #self.lines_y = map.lines_y
         self.x = map.player_x
         self.y = map.player_y
         self.speed = 4

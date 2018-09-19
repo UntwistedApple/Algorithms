@@ -58,7 +58,6 @@ class GenAI(object):
         fit = 0
         if not player.goal_reached:
             fit += (player.new_fields/self.highest_exploration)**self.learning_rate * 2.5
-            #fit *= 1 + 100/player.move_at_last_new
         else:
             if not self.done:
                 self.done = True
@@ -108,9 +107,9 @@ class GenAI(object):
         for i in range(new_genes):
             if random.random() > self.mutation_rate and not rand:
                 if random.random() > 0.5:
-                    new_player.moves.append(player_2.moves[i])
+                    new_player.moves.append(player_2.moves[len(self.constant_moves)+i])
                 else:
-                    new_player.moves.append(player_1.moves[i])
+                    new_player.moves.append(player_1.moves[len(self.constant_moves)+i])
             else:
                 new_player.moves.append(random.choice((0, 1, 2, 3)))
         return new_player
@@ -118,11 +117,10 @@ class GenAI(object):
 
 class GenAI_2(GenAI):       # TODO: Alle neuen moves ab der ersten Generation scheinen vererbt/kopiert
                             # TODO: wahrscheinlich von dem besten Player zu sein.. (Nur in V3?)
-                            # TODO: Die Spieler verhalten sich zu ähnlich bis auf erkennbare Mutationen.
+                            # TODO: Die Spieler verhalten sich zu ähnlich bis auf erkennbare Mutationen. --> DONE
+                # TODO: SAME ERROR! --> DONE!
+    # TODO: Alle tiles (evtl. bis auf den best_player) scheinen bevorzugt nach unten-rechts zu wandern! --> DONE
 
-    # TODO: Alle tiles (evtl. bis auf den best_player) scheinen bevorzugt nach unten-rechts zu wandern!
-
-    # TODO: Ein player (anscheinend der best_player) hält sich nicht an die constant moves?? (V3!) --> DONE
     def __init__(self, map):
 
         GenAI.__init__(self, map)
@@ -199,13 +197,10 @@ class GenAI_3(GenAI):
         if not self.done and self.generation >= self.generations_before_begin:
             if ((self.generation-self.generations_before_begin) % self.generations_per_change) == 0:
                 self.move_count += self.new_constants
-                print(best_player.moves)
                 for ind in range(self.new_constants):
                     best_player.moves.append(random.choice((0, 1, 2, 3)))
-                    move = best_player.moves[self.constant_moves.__len__()]
+                    move = best_player.moves[len(self.constant_moves)]
                     self.constant_moves.append(move)
-                    print(move)
-                print(best_player.moves)
                 self.new_chance = True
         print('%d constant moves' % len(self.constant_moves))
         all_score = 0
@@ -216,14 +211,12 @@ class GenAI_3(GenAI):
             b = random.random() * all_score
             player_a = self.search(a)
             player_b = self.search(b)
-            new_player = self.breed(player_a, player_b, self.moves_in_advance)
+            new_player = self.breed(player_a, player_b, self.moves_in_advance, self.new_chance)
             if self.new_chance:
                 new_player.moves.append(random.choice((0, 1, 2, 3)))
             new_players.append(new_player)
         self.generation += 1
         self.players = new_players
         self.map.players = self.players
-        print(best_player.moves == self.players[0].moves)
         print(self.players[0].moves)
         print(self.constant_moves)
-        print(self.players[round(random.random()*len(self.players))].moves)
