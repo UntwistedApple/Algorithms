@@ -20,7 +20,7 @@ class Tilemap(object):
         self.tileset.add_tile('goal', 104, 0)
         self.tileset.add_tile('player', 0, 52)
         self.max_fps = 30
-        self.player_x = -200
+        self.player_x = -200  # TODO: Den ganzen Blödsinn hier in n dictionary umschreiben
         self.player_y = -200
         self.goals = list()
         self.name = ''
