@@ -27,6 +27,7 @@ class Tilemap(object):
         self.see_all = True
         self.is_bot = False
         self.goal_reached = False
+        self.in_constants = False
         self.texts = list()
         self.font = pygame.font.SysFont('Arial', 40)  # Comic Sans MS
         self.started = False
@@ -85,15 +86,21 @@ class Tilemap(object):
             pygame.draw.rect(screen, (0, 0, 0), (line[0][0]+2, line[1], line[0][1]-line[0][0]-2, 2))
         for line in self.lines_y:
             pygame.draw.rect(screen, (0, 0, 0), (line[0], line[1][0], 2, line[1][1]-line[1][0]+2))
+        if self.is_bot:
+            if self.players[0].count_moves < len(self.bot.constant_moves):
+                self.in_constants = True
+            else:
+                self.in_constants = False
         for player in self.players:
-            if self.see_all or player.visible:
+            if self.see_all and not self.in_constants or player.visible:
                 screen.blit(self.tileset.image, (player.x, player.y), player.rect)
         for dot in self.dots:
             dot.render(screen)
-        for player in self.players:
-            for dot in self.dots:
-                if dot.x-38 < player.x < dot.x+15 and dot.y-38 < player.y < dot.y+15:
-                    player.fail()
+        if not self.in_constants:
+            for player in self.players:
+                for dot in self.dots:
+                    if dot.x-38 < player.x < dot.x+15 and dot.y-38 < player.y < dot.y+15:
+                        player.fail()
         for string in self.texts:
             text = self.font.render(string[0], False, (0, 0, 0))
             screen.blit(text, (string[1], string[2]))
@@ -179,10 +186,10 @@ class Tilemap(object):
             return
         if len(self.players) == 0:
             self.finished()
+        if self.players[0].count_moves >= self.bot.move_count:
+            self.finished()
+            return
         for player in self.players:
-            if player.count_moves >= self.bot.move_count:
-                self.finished()
-                return
             move = player.moves[player.count_moves]
             if move == 0:
                 player.move_up()
