@@ -8,15 +8,6 @@ import numpy
 class Player(object):
 
     def __init__(self, map):
-        if map.is_bot:
-            self.visible = False
-            self.fitness = 0
-            self.failed = False
-            self.moves = list()
-            self.goal_reached = False
-            self.visited = list()
-            self.new_fields = 0
-            self.move_at_last_new = 0
         self.count_moves = 0
         self.time = list()
         self.finish_time = list()
@@ -76,22 +67,7 @@ class Player(object):
                 return
         if self.map.is_bot:
             self.count_moves += 1
-            if not ((self.x+1)//52, (self.y+1)//52) in self.visited:
-                self.new_fields += 1
-                self.visited.append(((self.x+1)//52, (self.y+1)//52))
-                self.move_at_last_new = self.count_moves
-            if not ((self.x+37)//52, (self.y+1)//52) in self.visited:
-                self.new_fields += 1
-                self.visited.append(((self.x+37)//52, (self.y+1)//52))
-                self.move_at_last_new = self.count_moves
-            if not ((self.x+1)//52, (self.y+37)//52) in self.visited:
-                self.new_fields += 1
-                self.visited.append(((self.x+1)//52, (self.y+37)//52))
-                self.move_at_last_new = self.count_moves
-            if not ((self.x+37)//52, (self.y+37)//52) in self.visited:
-                self.new_fields += 1
-                self.visited.append(((self.x+37)//52, (self.y+37)//52))
-                self.move_at_last_new = self.count_moves
+            self.fitness_func()
 
     def fail(self):
         if not self.map.is_bot:
@@ -120,3 +96,225 @@ class Player(object):
         if self.time[4] < 0:
             self.time[3] -= 1
             self.time[4] += 1000000
+
+
+class PlayerOld(Player):
+
+    def __init__(self, map):
+        Player.__init__(self, map)
+        self.visible = False
+        self.fitness = 0
+        self.failed = False
+        self.moves = list()
+        self.goal_reached = False
+        self.visited = list()
+        self.new_fields = 0
+        self.move_at_last_new = 0
+        self.highest_point = 0
+
+    def fitness_func(self):
+        if not ((self.x + 1) // 52, (self.y + 1) // 52) in self.visited:
+            self.new_fields += 1
+            self.visited.append(((self.x + 1) // 52, (self.y + 1) // 52))
+            self.move_at_last_new = self.count_moves
+        if not ((self.x + 37) // 52, (self.y + 1) // 52) in self.visited:
+            self.new_fields += 1
+            self.visited.append(((self.x + 37) // 52, (self.y + 1) // 52))
+            self.move_at_last_new = self.count_moves
+        if not ((self.x + 1) // 52, (self.y + 37) // 52) in self.visited:
+            self.new_fields += 1
+            self.visited.append(((self.x + 1) // 52, (self.y + 37) // 52))
+            self.move_at_last_new = self.count_moves
+        if not ((self.x + 37) // 52, (self.y + 37) // 52) in self.visited:
+            self.new_fields += 1
+            self.visited.append(((self.x + 37) // 52, (self.y + 37) // 52))
+            self.move_at_last_new = self.count_moves
+
+
+class PlayerNew(Player):
+
+    def __init__(self, map):
+        Player.__init__(self, map)
+        self.move_at_last_new = 0
+        self.visible = False
+        self.fitness = 0
+        self.failed = False
+        self.moves = list()
+        self.goal_reached = False
+        self.progress = 0
+        self.closest_line = None
+        self.closest_dist = None
+        closest = None
+        for line in self.map.shortest_lines:
+            coll = self.line_collision((self.x, self.y), line)
+            if coll:
+                dist = numpy.ma.sqrt((coll[0]-self.x)**2+(coll[1]-self.y)**2)
+                if closest is None or closest > dist:
+                    closest = dist
+                    self.closest_line = line
+        if self.closest_line is None:
+            for line in self.map.shortest_lines:
+                dist = numpy.ma.sqrt((line.start[0]-self.x)**2+(line.start[1]-self.y)**2)
+                if self.closest_dist is None or self.closest_dist > dist:
+                    self.closest_line = line
+                    self.closest_dist = dist
+            """last_line = self.map.shortest_lines[::-1][:1]
+            dist = numpy.ma.sqrt((last_line.end[0]-self.x)**2+(last_line.end[1]-self.y)**2)
+            if closest > dist:
+                self.closest_line = last_line
+                self.closest_dist = dist"""
+
+    def fitness_func(self):
+        coll = self.line_collision((self.x, self.y), self.closest_line)
+
+        ind = self.map.shortest_lines.index(self.closest_line)
+
+        if ind != len(self.map.shortest_lines)-1:
+            next_line = self.map.shortest_lines[ind + 1]
+        else:
+            next_line = None
+
+        if ind != 0:
+            line_before = self.map.shortest_lines[ind - 1]
+        else:
+            line_before = None
+
+        if self.map.players.index(self) == 15 and self.count_moves == self.map.bot.move_count-5:
+            print('Closest line:', self.closest_line)
+            print('Line before:', line_before)
+        # Die Linie danach und die davor
+
+        if coll:
+            pythagoras = numpy.ma.sqrt((coll[0]-self.closest_line.start[0])**2 +
+                                       (coll[1]-self.closest_line.start[1]))
+            self_path = self.closest_line.path + pythagoras
+
+            self.closest_dist = None
+            # Sollte eine Kollision vorhanden sein, setze ich self.closest_dist auf None da diese Variable ein
+            # Indikator dafür ist ob ich die letzte Kollision mit einem Punkt oder einer Line war
+
+        else:
+
+            # Sollte ich keine Kollision mit der aktuellen besten Linie errechnen, ist
+            # der player schon bei der nächsten oder bei der letzten Linie oder dazwischen
+
+            closest = None
+
+            for line in (next_line, line_before):
+
+                if line is not None:
+
+                    # Ich prüfe sowohl die Linie davor als auch die Linie danach
+
+                    coll = self.line_collision((self.x, self.y), line)
+                    if coll:
+                        pythagoras = numpy.ma.sqrt((coll[0] - line.start[0]) ** 2 +
+                                                   (coll[1] - line.start[1]))
+
+                        if closest is None or closest > pythagoras:
+                            closest = pythagoras
+                            self_path = line.path + pythagoras
+                            self.closest_dist = None
+
+                        break
+            if closest is None:
+
+                # Wenn es mit keiner Linie eine Kollision gab
+
+                self.closest_dist = None
+
+                for line in self.map.shortest_lines:
+                    dist = numpy.ma.sqrt((line.start[0] - self.x) ** 2 + (line.start[1] - self.y) ** 2)
+                    if self.closest_dist is None or self.closest_dist > dist:
+                        self.closest_line = line
+                        self.closest_dist = dist
+                        self_path = self.closest_line.path
+        """all_length = 0
+        for line in self.map.shortest_lines:
+            all_length += line.length
+            coll = self.line_collision((self.x, self.y), line)
+            if coll:
+                dist = abs(coll[0] - self.x) + abs(coll[1] - self.y)
+                # Viel schneller als den Satz den Pytagoras zu nutzen (Wurzeln ziehen dauert ewig), aber ungenauer...
+
+                # dist = numpy.ma.sqrt((coll[0]-self.x)**2+(coll[1]-self.y)**2)
+                # Ich probiere es trotzdme mal..
+                if closest is None or closest < dist:
+                    closest = dist
+                    self.closest_line = line
+                    closest_coll = coll"""
+
+        last_line = self.map.shortest_lines[::-1][0]
+
+        all_length = last_line.path + last_line.length
+
+        if self.closest_dist is not None:
+            all_length += self.closest_dist
+            # So wird der progress niedriger je weiter der palyer sich von dem nächsten Eckpunkt entfernt
+            # Denn sobald er sehr nah dran ist, ist die Wahrscheinlichkeit relativ hoch die nächste Linie zu erreichen
+
+        progress = self_path / all_length
+        if self.progress < progress:
+            self.progress = progress
+            self.move_at_last_new = self.count_moves
+
+        fitness = progress * 10
+        # Vielleicht verändere ich die fitness noch weiter, außerdem ist es übersichtlicher
+
+        return fitness
+
+    def line_collision(self, start, line):
+
+        # Das ist eine Abwandlung der Level.Button.test_line_collision funktion
+
+        stuetz1 = numpy.array(start)
+        # Der stützvektor ist die Position des Players
+
+        if line.m is None:
+            if line.end[1] < start[1] < line.start[1] or line.start[1] < start[1] < line.end[1]:
+                return line.start[0], start[1]
+            else:
+                return False
+        elif line.m == 0:
+            if line.end[0] < start[0] < line.start[0] or line.start[0] < start[0] < line.end[0]:
+                return start[0], line.start[1]
+            else:
+                return False
+        streck1 = numpy.array((1, -1/line.m))
+        # Der Streckvektor ist der die steigung einer Senkrechten zu der zu vergleichenden Linie,
+        # die durch den Player führt
+
+        # Wir vergleichen diesmal nur mit einer einzigen Linie
+        stuetz2 = numpy.array((line.start[0], line.start[1]))
+        streck2 = numpy.array((line.end[0], line.end[1])) - stuetz2
+        # Wieder vektoren deklarieren
+
+        # Die Linien schneiden sich sicher. Jegliche Kontrolle wäre sinnlos
+
+        # Vorhin haben wir ja die Vektoren deklariert...
+        # Damit haben wir: stuetz1 + r * streck1 = stuetz2 + s * streck2
+        # --> stuetz1 - stuetz2 = s * streck2 - r * (-streck1)
+        # Damit kommen wir auf ein lineares Gleichungssystem, das wir mit NumPy lösen können:
+
+        # In den Kombinationen werden die Vektoren manuell zu neuen zusammengefügt, mit denen dann gerechnet werden kann
+        kombi_1 = numpy.array((streck2[0], -streck1[0]))
+        kombi_2 = numpy.array((streck2[1], -streck1[1]))
+
+        res = numpy.linalg.solve((kombi_1, kombi_2), (stuetz1 - stuetz2))
+
+        # Da meine Streckvektoren immer die gesamte Strecke sind, kann der Punkt nur auf der Strecke liegen wenn die
+        # Multiplikatoren zwischen 0 und 1 liegen.
+        if not (0 <= res[0] <= 1):
+            return False
+
+        # s1 und s2 müssten gleich sein, ich kontrolliere jedoch anfangs sicherheitshalber mit
+        # (Wenn sie dies lesen können hab ich vergessen es zu löschen :D)
+        s1 = list(map(lambda x: round(x, 10), list(res[0] * streck2 + stuetz2)))
+        s2 = list(map(lambda x: round(x, 10), list(res[1] * streck1 + stuetz1)))
+        if s1 == s2:
+            return s1
+        else:
+            # Sollten s1 und s2 jedoch nicht gleich sein, interessiert mich brennend warum und ich raise einen Error
+            raise ValueError('Wenn sie diesen Error sehen hab ich (Oder das Sturmtief Fabienne) die Matrix kaputt'
+                             'gemacht, denn dieser Error kann eigentlich gar nicht auftreten.')
+        raise IndexError('There are no Lines in that map! Dude, WTF?')

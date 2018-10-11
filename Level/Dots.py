@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 
 import pygame
-from numpy import sqrt
+from numpy.ma import sqrt
 
 
 class Dot(object):

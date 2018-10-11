@@ -9,18 +9,26 @@ import copy
 class GenAI(object):
 
     def __init__(self, map):
+        self.map = map
+        old_or_new = ((self.old_fitness, Player.PlayerOld),
+                      (self.new_fitness, Player.PlayerNew))
+        self.fitness, self.PlayerClass, = old_or_new[self.map.new_fitness]
+        """if self.map.new_fitness:
+            self.fitness = self.new_fitness
+            self.PlayerClass = Player.PlayerNew
+        else:
+            self.fitness = self.old_fitness
+            self.PlayerClass = Player.PlayerOld"""
         self.constant_moves = list()
         self.players = list()
         self.generation = 1
-        self.map = map
         self.done = False
         self.learning_rate = 8
         self.learning_rate_2 = 2
-        self.population = 1000
+        self.population = 150
         self.move_count = 1500
-        #self.player_addition = self.move_count
         for count in range(self.population):
-            self.players.append(Player.Player(self.map))
+            self.players.append(self.PlayerClass(self.map))
         if type(self) == GenAI:
             for player in self.players:
                 for count in range(self.move_count):
@@ -34,10 +42,18 @@ class GenAI(object):
         Button.restart(self.map)
         self.highest_exploration = 0
         for player in self.players:
-            if player.new_fields > self.highest_exploration:
-                self.highest_exploration = player.new_fields
+            if self.map.new_fitness:
+                player_progresses = player.progress
+            else:
+                player_progresses = player.new_fields
+            if player_progresses > self.highest_exploration:
+                self.highest_exploration = player_progresses
+        highest = 0
         for player in self.players:
-            player.fitness = self.fitness(player)
+            if player.progress > highest:
+                highest = player.progress
+        for player in self.players:
+            player.fitness = self.fitness(player, highest)
         highest = 0
         for player in self.players:
             if player.fitness > highest:
@@ -47,14 +63,15 @@ class GenAI(object):
             if player.fitness == highest:
                 highest_players.append(player)
         highest_players.sort(key=lambda x: -x.move_at_last_new)
-        for player in highest_players:
-            player.fitness += 2 * ((highest_players.index(player)+1)/len(highest_players))**self.learning_rate_2
+        if not self.map.new_fitness:
+            for player in highest_players:
+                player.fitness += 2 * ((highest_players.index(player)+1)/len(highest_players))**self.learning_rate_2
         print(len(highest_players))
         for _ in highest_players[-10:]:
             print(_.fitness, _.move_at_last_new)
         self.evolve()
 
-    def fitness(self, player):
+    def old_fitness(self, player, x):
         fit = 0
         if not player.goal_reached:
             fit += (player.new_fields/self.highest_exploration)**self.learning_rate * 2.5
@@ -70,6 +87,20 @@ class GenAI(object):
             fit *= 0.5
         return fit
 
+    def new_fitness(self, player, highest):
+        fit = 0
+        if not player.goal_reached:
+            fit += (player.progress/highest) ** (self.learning_rate / 2) * 5
+        else:
+            if not self.done:
+                self.done = True
+                self.constant_moves = list()
+                self.moves_to_make = self.move_count
+            fit += 10 + 15 * (1 / player.time_in_seconds)
+        if player.failed:
+            fit *= 0.5
+        return fit
+
     def evolve(self):
         highest_fitness_player = self.players[0]
         for player in self.players:
@@ -77,7 +108,7 @@ class GenAI(object):
                 highest_fitness_player = player
         print(highest_fitness_player.visited)
         new_players = list()
-        best_player = Player.Player(self.map)
+        best_player = self.PlayerClass(self.map)
         best_player.visible = True
         best_player.moves = highest_fitness_player.moves
         new_players.append(best_player)
@@ -102,7 +133,7 @@ class GenAI(object):
                 score -= player.fitness
 
     def breed(self, player_1, player_2, new_genes, rand=False):
-        new_player = Player.Player(self.map)
+        new_player = self.PlayerClass(self.map)
         new_player.moves = copy.copy(self.constant_moves)
         for i in range(new_genes):
             if random.random() > self.mutation_rate and not rand:
@@ -115,11 +146,7 @@ class GenAI(object):
         return new_player
 
 
-class GenAI_2(GenAI):       # TODO: Alle neuen moves ab der ersten Generation scheinen vererbt/kopiert
-                            # TODO: wahrscheinlich von dem besten Player zu sein.. (Nur in V3?)
-                            # TODO: Die Spieler verhalten sich zu ähnlich bis auf erkennbare Mutationen. --> DONE
-                # TODO: SAME ERROR! --> DONE!
-    # TODO: Alle tiles (evtl. bis auf den best_player) scheinen bevorzugt nach unten-rechts zu wandern! --> DONE
+class GenAI_2(GenAI):
 
     def __init__(self, map):
 
@@ -144,7 +171,7 @@ class GenAI_2(GenAI):       # TODO: Alle neuen moves ab der ersten Generation sc
                 highest_fitness_player = player
         print(str(highest_fitness_player.visited)+'\n')
         new_players = list()
-        best_player = Player.Player(self.map)
+        best_player = self.PlayerClass(self.map)
         best_player.visible = True
         best_player.moves = copy.copy(highest_fitness_player.moves)
         if (self.generation % self.generations_per_change) == 0 and not self.done:
@@ -172,11 +199,11 @@ class GenAI_3(GenAI):
 
     def __init__(self, map):
         GenAI.__init__(self, map)
-        self.new_constants = 15
-        self.moves_in_advance = 50  # Bewegungen im Voraus die dynamisch sind
+        self.new_constants = 30
+        self.moves_in_advance = 80  # Bewegungen im Voraus die dynamisch sind
         self.move_count = self.moves_in_advance
-        self.generations_before_begin = 10
-        self.generations_per_change = 10
+        self.generations_before_begin = 40
+        self.generations_per_change = 30
         self.new_chance = bool
         for player in self.players:
             for count in range(self.move_count):
@@ -188,9 +215,12 @@ class GenAI_3(GenAI):
         for player in self.players:
             if player.fitness >= highest_fitness_player.fitness:
                 highest_fitness_player = player
-        print(highest_fitness_player.visited)
+        if self.map.new_fitness:
+            print(str(round(highest_fitness_player.progress*100, 2))+'%')
+        else:
+            print(highest_fitness_player.visited)
         new_players = list()
-        best_player = Player.Player(self.map)
+        best_player = self.PlayerClass(self.map)
         best_player.visible = True
         best_player.moves = highest_fitness_player.moves
         new_players.append(best_player)
@@ -218,5 +248,3 @@ class GenAI_3(GenAI):
         self.generation += 1
         self.players = new_players
         self.map.players = self.players
-        print(self.players[0].moves)
-        print(self.constant_moves)

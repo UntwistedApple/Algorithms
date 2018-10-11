@@ -1,6 +1,9 @@
 # -*- coding: UTF-8 -*-
 
-from Level import main as level
+from Level import Main as level
 
 if __name__ == '__main__':
-    level.main()
+    try:
+        level.main()
+    except KeyboardInterrupt:
+        print('Aborted by keyboard command')

@@ -20,7 +20,7 @@ class Tilemap(object):
         self.tileset.add_tile('goal', 104, 0)
         self.tileset.add_tile('player', 0, 52)
         self.max_fps = 30
-        self.player_x = -200  # TODO: Den ganzen Blödsinn hier in n dictionary umschreiben
+        self.player_x = -200  # TODO: Den ganzen Blödsinn hier in n dictionary umschreiben?
         self.player_y = -200
         self.goals = list()
         self.name = ''
@@ -33,15 +33,21 @@ class Tilemap(object):
         self.started = False
         self.time = list()
         self.bot = None
+        self.new_fitness = True
+        self.shortest_lines = list()
+        self.coords = list()
 
         self.lines_x = list()
         self.lines_y = list()
+        self.ideal_line = list()
+        self.worked = list()
+        self.way = list()
 
         # Mapsize in Tiles
         self.width = 22
         self.height = 16
 
-        # Erstellen einer leeren Liste der Tiles
+        # Leere Liste der Tiles
         self.tiles = list()
 
         self.dots = list()
@@ -86,6 +92,12 @@ class Tilemap(object):
             pygame.draw.rect(screen, (0, 0, 0), (line[0][0]+2, line[1], line[0][1]-line[0][0]-2, 2))
         for line in self.lines_y:
             pygame.draw.rect(screen, (0, 0, 0), (line[0], line[1][0], 2, line[1][1]-line[1][0]+2))
+        #for collision in self.collisions:
+        #    pygame.draw.rect(screen, (200, 0, 0), (collision[0]-1, collision[1]-1, 4, 4))
+        #for worked in self.worked:
+        #    pygame.draw.rect(screen, (0, 200, 0), (worked[0] - 1, worked[1] - 1, 4, 4))
+        #for bread in self.way:
+        #    pygame.draw.rect(screen, (0, 0, 200), (bread[0] - 1, bread[1] - 1, 3, 3))
         if self.is_bot:
             if self.players[0].count_moves < len(self.bot.constant_moves):
                 self.in_constants = True
