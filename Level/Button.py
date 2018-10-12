@@ -113,6 +113,9 @@ class AlgoButton(Button):
             map.buttons.append(GenButton())
 
     def unclick(self, map):
+        for button in map.buttons:
+            if type(button) in (GenButton_1, GenButton_2, GenButton_3):
+                button.unclick(map)
         map.buttons = list(filter(lambda x: not isinstance(x, GenButton), map.buttons))
         self.clicked = False
 
@@ -149,6 +152,9 @@ class GenButton(Button):
 
     def unclick(self, map):
         self.clicked = False
+        for button in map.buttons:
+            if type(button) in (GenButton_1, GenButton_2, GenButton_3):
+                button.unclick(map)
         map.buttons = list(filter(lambda x: not isinstance(x, (GenButton_1, GenButton_2, GenButton_3)), map.buttons))
 
 
@@ -160,13 +166,23 @@ class GenButton_1(GenButton):
         self.y = 149
         self.msg = 'Genetic V1'
         self.text()
+        self.clicked = False
 
     def click(self, map):
+        self.clicked = True
+        map.buttons.append(WhichFitness(True, self.y, self))
+        map.buttons.append(WhichFitness(False, self.y, self))
+
+    def real_click(self, map):
         map.buttons.append(VisibleButton())
         map.is_bot = True
         map.get_time()
         restart(map, map.name)
         map.bot = GeneticAlgorithm.GenAI(map)
+
+    def unclick(self, map):
+        self.clicked = False
+        map.buttons = list(filter(lambda x: not isinstance(x, WhichFitness) or x.y != self.y, map.buttons))
 
 
 class GenButton_2(GenButton):
@@ -177,13 +193,23 @@ class GenButton_2(GenButton):
         self.y = 191
         self.msg = 'Genetic V2'
         self.text()
+        self.clicked = False
 
     def click(self, map):
+        self.clicked = True
+        map.buttons.append(WhichFitness(True, self.y, self))
+        map.buttons.append(WhichFitness(False, self.y, self))
+
+    def real_click(self, map):
         map.buttons.append(VisibleButton())
         map.is_bot = True
         map.get_time()
         restart(map, map.name)
         map.bot = GeneticAlgorithm.GenAI_2(map)
+
+    def unclick(self, map):
+        self.clicked = False
+        map.buttons = list(filter(lambda x: not isinstance(x, WhichFitness) or x.y != self.y, map.buttons))
 
 
 class GenButton_3(GenButton):
@@ -194,13 +220,37 @@ class GenButton_3(GenButton):
         self.y = 233
         self.msg = 'Genetic V3'
         self.text()
+        self.clicked = False
 
     def click(self, map):
+        self.clicked = True
+        map.buttons.append(WhichFitness(True, self.y, self))
+        map.buttons.append(WhichFitness(False, self.y, self))
+
+    def real_click(self, map):
         map.buttons.append(VisibleButton())
         map.is_bot = True
         map.get_time()
         restart(map, map.name)
         map.bot = GeneticAlgorithm.GenAI_3(map)
+
+    def unclick(self, map):
+        self.clicked = False
+        map.buttons = list(filter(lambda x: not isinstance(x, WhichFitness) or x.y != self.y, map.buttons))
+
+
+class WhichFitness(Button):
+
+    def __init__(self, new, y, parent):
+        old_new = (('F1', 290), ('F2', 486))
+        old_new = old_new[new]
+        Button.__init__(self, old_new[0], old_new[1], y, 40, 40, 5, 25)
+        self.new = new
+        self.parent = parent
+
+    def click(self, map):
+        map.new_fitness = self.new
+        self.parent.real_click(map)
 
 
 class VisibleButton(Button):
@@ -238,6 +288,7 @@ def restart(map, name=''):
 
 
 def load(map, Savename):
+    map.which_move = 0
     if map.name != '':
         restart(map, name=Savename)
         return

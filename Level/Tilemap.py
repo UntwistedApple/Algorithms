@@ -36,6 +36,7 @@ class Tilemap(object):
         self.new_fitness = True
         self.shortest_lines = list()
         self.coords = list()
+        self.which_move = 0
 
         self.lines_x = list()
         self.lines_y = list()
@@ -131,7 +132,7 @@ class Tilemap(object):
         elif isinstance(self.bot, GeneticAlgorithm.GenAI):
             text = pygame.font.SysFont('Arial', 40).render(str(self.bot.generation), False, (0, 0, 0))
             screen.blit(text, (20, 130))
-            text = pygame.font.SysFont('Arial', 40).render(str(self.players[0].count_moves), False, (0, 0, 0))
+            text = pygame.font.SysFont('Arial', 40).render(str(self.which_move), False, (0, 0, 0))
             screen.blit(text, (20, 165))
         for button in self.buttons:
             button.render(screen)
@@ -167,12 +168,24 @@ class Tilemap(object):
                     button.click(self)
                 else:
                     button.unclick(self)
+
         for button in self.buttons:
+            # Jeder Button
+
             if button.clicked and whathit is not None:
-                if not isinstance(button, whathit):
-                    if whathit == Button.GenButton:
+                # Der geklickt ist, falls auf etwas geklickt wurde
+
+                if not isinstance(button, whathit): #whathit != type(button)
+                    # Auf den aber nicht selbst geklickt wurde
+
+                    if whathit in (Button.GenButton_1, Button.GenButton_2, Button.GenButton_3):
+                        if type(button) not in (Button.GenButton, Button.AlgoButton):
+                            button.unclick(self)
+
+                    elif whathit == Button.GenButton:
                         if not isinstance(button, Button.AlgoButton):
                             button.unclick(self)
+
                     else:
                         button.unclick(self)
             elif button.clicked:
@@ -194,6 +207,7 @@ class Tilemap(object):
         self.started = False
 
     def move(self):
+        self.which_move += 1
         if not self.is_bot:
             return
         if len(self.players) == 0:
