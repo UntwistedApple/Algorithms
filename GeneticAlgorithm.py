@@ -13,19 +13,14 @@ class GenAI(object):
         old_or_new = ((self.old_fitness, Player.PlayerOld),
                       (self.new_fitness, Player.PlayerNew))
         self.fitness, self.PlayerClass, = old_or_new[self.map.new_fitness]
-        """if self.map.new_fitness:
-            self.fitness = self.new_fitness
-            self.PlayerClass = Player.PlayerNew
-        else:
-            self.fitness = self.old_fitness
-            self.PlayerClass = Player.PlayerOld"""
         self.constant_moves = list()
         self.players = list()
         self.generation = 1
         self.done = False
         self.learning_rate = 8
-        self.learning_rate_2 = 2
-        self.population = 150
+        self.learning_rate_2 = 1.5
+        self.learning_rate_finished = self.learning_rate * 2
+        self.population = 200
         self.move_count = 1500
         for count in range(self.population):
             self.players.append(self.PlayerClass(self.map))
@@ -37,6 +32,8 @@ class GenAI(object):
         self.highest_exploration = int
         self.mutation_rate = 3
         self.mutation_rate = 1 / self.mutation_rate
+        self.stop = False
+        self.max_moves = 0
 
     def finished(self):
         Button.restart(self.map)
@@ -78,6 +75,7 @@ class GenAI(object):
         else:
             if not self.done:
                 self.done = True
+                self.max_moves = len(player.moves)
                 self.constant_moves = list()
                 self.moves_to_make = self.move_count
             fit += 5 + 15 * (1/player.time_in_seconds)
@@ -90,12 +88,16 @@ class GenAI(object):
     def new_fitness(self, player, highest):
         fit = 0
         if not player.goal_reached:
-            fit += (player.progress/highest) ** (self.learning_rate / 2) * 5
+            fit += (player.progress/highest) ** (self.learning_rate) * 5
         else:
             if not self.done:
+                print(player)
                 self.done = True
+                self.max_moves = len(player.moves)
+                print('\nMax moves: %s\n' % self.max_moves)
                 self.constant_moves = list()
                 self.moves_to_make = self.move_count
+                self.success(player.time)
             fit += 10 + 15 * (1 / player.time_in_seconds)
         if player.failed:
             fit *= 0.5
@@ -144,6 +146,15 @@ class GenAI(object):
             else:
                 new_player.moves.append(random.choice((0, 1, 2, 3)))
         return new_player
+
+    def success(self, time):
+        self.map.goal_reached = True
+        text1 = 'Solved in %d days and ' % time[0]
+        text1 += '%d:%d:%d:%d' % (time[1], time[2], time[3], time[4])
+        text2 = 'Interrupt trough a restart or continue running to improve results'
+        self.map.done_text = (text1, 225, 150)
+        self.map.help_text = (text2, 1, 800)
+        self.learning_rate = self.learning_rate_finished
 
 
 class GenAI_2(GenAI):
@@ -202,8 +213,8 @@ class GenAI_3(GenAI):
         self.new_constants = 30
         self.moves_in_advance = 80  # Bewegungen im Voraus die dynamisch sind
         self.move_count = self.moves_in_advance
-        self.generations_before_begin = 40
-        self.generations_per_change = 30
+        self.generations_before_begin = 100
+        self.generations_per_change = 50
         self.new_chance = bool
         for player in self.players:
             for count in range(self.move_count):
@@ -215,10 +226,13 @@ class GenAI_3(GenAI):
         for player in self.players:
             if player.fitness >= highest_fitness_player.fitness:
                 highest_fitness_player = player
-        if self.map.new_fitness:
-            print(str(round(highest_fitness_player.progress*100, 2))+'%')
+        if self.done:
+            print('Goal reached!')
         else:
-            print(highest_fitness_player.visited)
+            if self.map.new_fitness:
+                print(str(round(highest_fitness_player.progress*100, 4))+'%')
+            else:
+                print(highest_fitness_player.visited)
         new_players = list()
         best_player = self.PlayerClass(self.map)
         best_player.visible = True
@@ -241,7 +255,10 @@ class GenAI_3(GenAI):
             b = random.random() * all_score
             player_a = self.search(a)
             player_b = self.search(b)
-            new_player = self.breed(player_a, player_b, self.moves_in_advance, self.new_chance)
+            if not self.done:
+                new_player = self.breed(player_a, player_b, self.moves_in_advance, self.new_chance)
+            else:
+                new_player = self.breed(player_a, player_b, self.max_moves, False)
             if self.new_chance:
                 new_player.moves.append(random.choice((0, 1, 2, 3)))
             new_players.append(new_player)

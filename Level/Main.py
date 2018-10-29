@@ -3,10 +3,9 @@
 import pygame
 from Level import Tilemap
 
-
 # Überprüfen, ob die optionalen Text- und Sound-Module geladen werden konnten
-if not pygame.font: print('Fehler pygame.font Modul konnte nicht geladen werden!')
-if not pygame.mixer: print('Fehler pygame.mixer Modul konnte nicht geladen werden!')
+if not pygame.font: print('Error pygame.font module couldn\'t be loaded!')
+if not pygame.mixer: print('Error pygame.mixer module couldn\'t be loaded!')
 
 
 def main():

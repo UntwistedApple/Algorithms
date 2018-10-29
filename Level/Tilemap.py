@@ -29,6 +29,8 @@ class Tilemap(object):
         self.goal_reached = False
         self.in_constants = False
         self.texts = list()
+        self.done_text = None
+        self.help_text = None
         self.font = pygame.font.SysFont('Arial', 40)  # Comic Sans MS
         self.started = False
         self.time = list()
@@ -114,6 +116,11 @@ class Tilemap(object):
                 for dot in self.dots:
                     if dot.x-38 < player.x < dot.x+15 and dot.y-38 < player.y < dot.y+15:
                         player.fail()
+        if self.help_text is not None:
+            text = pygame.font.SysFont('Arial', 20).render(self.help_text[0], False, (0, 0, 0))
+            screen.blit(text, (self.help_text[1], self.help_text[2]))
+        if self.done_text is not None and self.done_text not in self.texts:
+            self.texts.append(self.done_text)
         for string in self.texts:
             text = self.font.render(string[0], False, (0, 0, 0))
             screen.blit(text, (string[1], string[2]))
@@ -123,7 +130,7 @@ class Tilemap(object):
                                                            False, (0, 0, 0))
             screen.blit(text, (20, 130))
             text = pygame.font.SysFont('Arial', 40).render('%d / %d'
-                                                           % (self.players[0].count_moves, self.bot.moves_per_change),
+                                                           % (self.which_move, self.bot.moves_per_change),
                                                            False, (0, 0, 0))
             screen.blit(text, (20, 165))
             text = pygame.font.SysFont('Arial', 40).render(str(self.bot.generation // self.bot.generations_per_change),
@@ -197,9 +204,7 @@ class Tilemap(object):
         self.goal_reached = True
 
     def done(self, time):
-        text = ''
-        if time[0] != 0:
-            text += '%d days and '
+        text = '%d days and '
         text += '%d:%d:%d:%d' % (time[1], time[2], time[3], time[4])
         self.texts.append(('You won! Your Time: '+text, 225, 150))
         self.buttons.append(Button.RestartButton())
@@ -212,11 +217,17 @@ class Tilemap(object):
             return
         if len(self.players) == 0:
             self.finished()
-        if self.players[0].count_moves >= self.bot.move_count:
+        if self.which_move >= self.bot.move_count:
             self.finished()
             return
         for player in self.players:
-            move = player.moves[player.count_moves]
+            try:
+                move = player.moves[player.count_moves]
+            except IndexError:
+                msg = '\nError occured\nMove number %s\n%s\nPlayer 0:\n%s\nPlayer 67:\n%s\n' % (
+                    self.which_move, player, self.players[0], self.players[67])
+                print(msg)
+                raise
             if move == 0:
                 player.move_up()
             elif move == 1:

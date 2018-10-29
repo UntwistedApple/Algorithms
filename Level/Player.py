@@ -17,6 +17,7 @@ class Player(object):
         self.y = map.player_y
         self.speed = 4
         self.rect = pygame.rect.Rect(6, 58, 38, 38)
+        self.goal_reached = False
 
     def move_up(self):
         self.y -= self.speed
@@ -97,6 +98,11 @@ class Player(object):
             self.time[3] -= 1
             self.time[4] += 1000000
 
+    def __str__(self):
+        string = ''
+        string += 'player number %d\n' % self.map.bot.players.index(self)
+        return string
+
 
 class PlayerOld(Player):
 
@@ -140,7 +146,6 @@ class PlayerNew(Player):
         self.fitness = 0
         self.failed = False
         self.moves = list()
-        self.goal_reached = False
         self.progress = 0
         self.closest_line = None
         self.closest_dist = None
@@ -281,7 +286,7 @@ class PlayerNew(Player):
             else:
                 return False
         streck1 = numpy.array((1, -1/line.m))
-        # Der Streckvektor ist der die steigung einer Senkrechten zu der zu vergleichenden Linie,
+        # Der Streckvektor ist eine Senkrechte zu der zu vergleichenden Linie,
         # die durch den Player führt
 
         # Wir vergleichen diesmal nur mit einer einzigen Linie
@@ -293,7 +298,7 @@ class PlayerNew(Player):
 
         # Vorhin haben wir ja die Vektoren deklariert...
         # Damit haben wir: stuetz1 + r * streck1 = stuetz2 + s * streck2
-        # --> stuetz1 - stuetz2 = s * streck2 - r * (-streck1)
+        # --> stuetz1 - stuetz2 = s * streck2 + r * (-streck1)
         # Damit kommen wir auf ein lineares Gleichungssystem, das wir mit NumPy lösen können:
 
         # In den Kombinationen werden die Vektoren manuell zu neuen zusammengefügt, mit denen dann gerechnet werden kann
@@ -315,6 +320,18 @@ class PlayerNew(Player):
             return s1
         else:
             # Sollten s1 und s2 jedoch nicht gleich sein, interessiert mich brennend warum und ich raise einen Error
+
+            print('''start: %s
+                  line: %s
+                  s1: %s
+                  s2: %s''' % (start, line, s1, s2))
             raise ValueError('Wenn sie diesen Error sehen hab ich (Oder das Sturmtief Fabienne) die Matrix kaputt'
                              'gemacht, denn dieser Error kann eigentlich gar nicht auftreten.')
         raise IndexError('There are no Lines in that map! Dude, WTF?')
+
+    def __str__(self):
+        string = super().__str__()
+        string += '%d moves\n' % len(self.moves)
+        string += 'moves: %s\n' % self.moves
+        string += 'move number %d' % self.count_moves
+        return string
