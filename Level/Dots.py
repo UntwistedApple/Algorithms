@@ -2,11 +2,14 @@
 
 import pygame
 from numpy.ma import sqrt
+import config as cnf
+
+config = cnf.read()
 
 
 class Dot(object):
 
-    def __init__(self, coords, map, speed=7):
+    def __init__(self, coords, map, speed=config['dot_default_speed']):
         self.img = map.tileset.image
         self.x = coords[0]
         self.y = coords[1]

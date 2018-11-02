@@ -1,9 +1,11 @@
 # -*- coding: UTF-8 -*-
 
-from Level import Player
+from Level import Player, Button
 import random
-from Level import Button
 import copy
+import config as cnf
+
+config = cnf.read()
 
 
 class GenAI(object):
@@ -17,11 +19,11 @@ class GenAI(object):
         self.players = list()
         self.generation = 1
         self.done = False
-        self.learning_rate = 8
-        self.learning_rate_2 = 1.5
+        self.learning_rate = config['learning_rate']
+        self.learning_rate_2 = config['learning_rate2']
         self.learning_rate_finished = self.learning_rate * 2
-        self.population = 200
-        self.move_count = 1500
+        self.population = config['population']
+        self.move_count = config['move_count']
         for count in range(self.population):
             self.players.append(self.PlayerClass(self.map))
         if type(self) == GenAI:
@@ -30,7 +32,7 @@ class GenAI(object):
                     player.moves.append(random.choice((0, 1, 2, 3)))
         self.map.players = self.players
         self.highest_exploration = int
-        self.mutation_rate = 3
+        self.mutation_rate = config['mutation_rate']
         self.mutation_rate = 1 / self.mutation_rate
         self.stop = False
         self.max_moves = 0
@@ -162,9 +164,9 @@ class GenAI_2(GenAI):
     def __init__(self, map):
 
         GenAI.__init__(self, map)
-        self.moves_per_change = 100
+        self.moves_per_change = config['moves_every_change']
         self.moves_to_make = self.moves_per_change
-        self.generations_per_change = 30
+        self.generations_per_change = config['generations_between_changes']
         self.move_count = self.moves_per_change
         for player in self.players:
             player.moves = list()
@@ -210,11 +212,11 @@ class GenAI_3(GenAI):
 
     def __init__(self, map):
         GenAI.__init__(self, map)
-        self.new_constants = 30
-        self.moves_in_advance = 80  # Bewegungen im Voraus die dynamisch sind
+        self.new_constants = config['new_constant_moves']
+        self.moves_in_advance = config['moves_in_advance']  # Bewegungen im Voraus die dynamisch sind
         self.move_count = self.moves_in_advance
-        self.generations_before_begin = 100
-        self.generations_per_change = 50
+        self.generations_before_begin = config['generations_before_begin']
+        self.generations_per_change = config['generations_between_changes']
         self.new_chance = bool
         for player in self.players:
             for count in range(self.move_count):

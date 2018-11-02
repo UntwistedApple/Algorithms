@@ -3,6 +3,9 @@
 import pygame
 import datetime
 import numpy
+import config as cnf
+
+config = cnf.read()
 
 
 class Player(object):
@@ -15,7 +18,7 @@ class Player(object):
         self.map = map
         self.x = map.player_x
         self.y = map.player_y
-        self.speed = 4
+        self.speed = config['player_speed']
         self.rect = pygame.rect.Rect(6, 58, 38, 38)
         self.goal_reached = False
 

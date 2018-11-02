@@ -4,6 +4,9 @@ import pygame
 from Level import Tileset, Button, Player
 import datetime
 import GeneticAlgorithm
+import config as cnf
+
+config = cnf.read()
 
 
 # Die Tilemap Klasse verwaltet die Tile-Daten, die das Aussehen der Karte beschreiben
@@ -19,7 +22,7 @@ class Tilemap(object):
         self.tileset.add_tile('start', 104, 0)
         self.tileset.add_tile('goal', 104, 0)
         self.tileset.add_tile('player', 0, 52)
-        self.max_fps = 30
+        self.max_fps = config['max_fps_when_playing']
         self.player_x = -200  # TODO: Den ganzen Blödsinn hier in n dictionary umschreiben?
         self.player_y = -200
         self.goals = list()
@@ -72,9 +75,9 @@ class Tilemap(object):
 
     def render(self, screen):
         if self.is_bot:
-            self.max_fps = 80
+            self.max_fps = config['max_fps_bot']
         else:
-            self.max_fps = 30
+            self.max_fps = config['max_fps_when_playing']
         # Zeilenweise durch die Tiles durchgehen.
         for y in range(0, int(screen.get_height() / self.tileset.tile_height) + 1):
             if y >= self.height or y < 0:
